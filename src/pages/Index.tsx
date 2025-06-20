@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Sidebar } from "@/components/ChatSidebar";
 import { ChatInterface } from "@/components/ChatInterface";
@@ -172,19 +171,50 @@ const Index = () => {
   }
 
   async function pollForResult(executionId: string): Promise<string> {
-    // Simulate polling with random delay
-    const delay = Math.random() * 3000 + 1000; // 1-4 seconds
-    await new Promise(resolve => setTimeout(resolve, delay));
+    const maxPollTime = 5 * 60 * 1000; // 5 minutes in milliseconds
+    const pollInterval = 2000; // 2 seconds
+    const startTime = Date.now();
     
-    // Return mock response based on executionId
-    const responses = [
-      "I understand your question. Based on the information provided, here's my response...",
-      "That's an interesting point. Let me think about this and provide you with a comprehensive answer.",
-      "I can help you with that. Here's what I would recommend based on best practices...",
-      "Thank you for your question. After processing your request, here's my detailed response.",
-    ];
+    while (Date.now() - startTime < maxPollTime) {
+      // Simulate polling API call
+      await new Promise(resolve => setTimeout(resolve, pollInterval));
+      
+      // Simulate API response with status
+      const status = await simulateStatusCheck(executionId, Date.now() - startTime);
+      
+      if (status.status === "COMPLETE") {
+        return status.result;
+      } else if (status.status === "STILL_RUNNING") {
+        // Continue polling
+        continue;
+      } else if (status.status === "FAILED") {
+        throw new Error("Execution failed");
+      }
+    }
     
-    return responses[Math.floor(Math.random() * responses.length)];
+    // Timeout reached
+    throw new Error("Request timed out after 5 minutes");
+  }
+
+  async function simulateStatusCheck(executionId: string, elapsedTime: number): Promise<{status: string, result?: string}> {
+    // Simulate different statuses based on elapsed time
+    if (elapsedTime < 3000) {
+      return { status: "STILL_RUNNING" };
+    } else if (elapsedTime < 8000 && Math.random() > 0.3) {
+      return { status: "STILL_RUNNING" };
+    } else {
+      const responses = [
+        "I understand your question. Based on the information provided, here's my response...",
+        "That's an interesting point. Let me think about this and provide you with a comprehensive answer.",
+        "I can help you with that. Here's what I would recommend based on best practices...",
+        "Thank you for your question. After processing your request, here's my detailed response.",
+      ];
+      
+      return {
+        status: "COMPLETE",
+        result: responses[Math.floor(Math.random() * responses.length)]
+      };
+    }
   }
 };
 
